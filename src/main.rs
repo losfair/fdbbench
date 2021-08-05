@@ -27,6 +27,10 @@ struct Opt {
   #[structopt(long, default_value = "30000")]
   key_pool: usize,
 
+  /// Use snapshot reads.
+  #[structopt(long)]
+  snapshot: bool,
+
   /// Reads per iteration.
   #[structopt(long, default_value = "9")]
   reads: usize,
@@ -118,6 +122,7 @@ async fn async_main() -> Result<()> {
     let max_value_size = opt.max_value_size;
     let subspace = subspace.clone();
     let key_pool = opt.key_pool;
+    let snapshot = opt.snapshot;
     let stats = stats.clone();
     tokio::spawn(async move {
       for _ in 0..iterations {
@@ -127,7 +132,7 @@ async fn async_main() -> Result<()> {
             let x = rand::thread_rng().gen_range(0..key_pool);
             let key = subspace.pack(&(x as u64));
             let _ = txn
-              .get(&key, false)
+              .get(&key, snapshot)
               .await
               .unwrap()
               .expect("missing value for key");
